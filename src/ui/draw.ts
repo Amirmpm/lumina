@@ -13,7 +13,7 @@ export const C = { ink: '#14202b', line: '#9aa5b1', faint: '#d9dde3', accent: '#
 // The light palette remains the default for reports; interactive canvases opt into dark explicitly.
 export const DRAW_PALETTES = {
   light: { bg: '#fbfcfd', floor: '#eef1f4', zone: '#dfe9ee', outline: C.ink, line: C.line, accent: C.accent, accentText: '#80600f', muted: C.muted, lum: C.lum },
-  dark: { bg: '#171b22', floor: '#2b323d', zone: '#384452', outline: '#b9c5d1', line: '#8996a6', accent: '#f2ca72', accentText: '#f7d78b', muted: '#cad3dd', lum: '#f2ca72' },
+  dark: { bg: '#171b22', floor: '#2b323d', zone: '#384452', outline: '#b9c5d1', line: '#8996a6', accent: '#f4c752', accentText: '#ffe298', muted: '#cad3dd', lum: '#f4c752' },
 } as const;
 export interface Tx { x0: number; scale: number; y0: number } // plan: world x → px = (x-x0)*scale ; world y → px = y0 + y*scale
 
