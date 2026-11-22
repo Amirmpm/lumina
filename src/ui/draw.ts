@@ -9,7 +9,7 @@ export function heat(t: number): string {
   const a = STOPS[i], b = STOPS[i + 1];
   return `rgb(${Math.round(a[0] + (b[0] - a[0]) * f)},${Math.round(a[1] + (b[1] - a[1]) * f)},${Math.round(a[2] + (b[2] - a[2]) * f)})`;
 }
-export const C = { ink: '#14202b', line: '#9aa5b1', faint: '#d9dde3', accent: '#8c630a', lum: '#f2a900', text: '#161b22', muted: '#5b6574', bg3d: '#101820' };
+export const C = { ink: '#14202b', line: '#9aa5b1', faint: '#d9dde3', accent: '#d4a735', lum: '#f2a900', text: '#161b22', muted: '#5b6574', bg3d: '#101820' };
 export interface Tx { x0: number; scale: number; y0: number } // plan: world x → px = (x-x0)*scale ; world y → px = y0 + y*scale
 
 export function drawColorbar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, vmin: number, vmax: number, unit: string, dark = false) {
@@ -52,7 +52,7 @@ export function drawSection(ctx: CanvasRenderingContext2D, w: number, h: number,
   const X = (y: number) => ox + y * sc, Z = (z: number) => oz - z * sc;
   ctx.beginPath(); g.outline.forEach((p, i) => (i ? ctx.lineTo(X(p.y), Z(p.z)) : ctx.moveTo(X(p.y), Z(p.z)))); ctx.closePath();
   ctx.fillStyle = '#eef1f4'; ctx.fill(); ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.stroke();
-  ctx.fillStyle = 'rgba(176,130,29,.28)'; ctx.fillRect(X(g.zone.y0), Z(0) - 3, (g.zone.y1 - g.zone.y0) * sc, 6);
+  ctx.fillStyle = 'rgba(226,185,78,.36)'; ctx.fillRect(X(g.zone.y0), Z(0) - 3, (g.zone.y1 - g.zone.y0) * sc, 6);
   const at = pos.map((q, i) => ({ q, i })).filter(({ q }) => Math.abs(q.x - selX) <= Math.max(0.6, (lum?.length ?? 0.6) / 2 + 1e-6) || false);
   const rowsShown = new Set<number>();
   const nearest = new Map<number, { q: Placed; i: number }>();
