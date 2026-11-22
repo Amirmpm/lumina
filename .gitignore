@@ -1,5 +1,6 @@
 node_modules/
 dist/
 .test-out/
+.wrangler/
 *.log
 .DS_Store

@@ -20,7 +20,8 @@ The repo is wired for Cloudflare Pages out of the box — nothing to configure:
 Notes:
 * The build produces a **single self-contained `dist/index.html`** (~460 kB, all JS/CSS inlined) plus `sw.js`, `manifest.webmanifest` and `icon.svg` — no server-side runtime, no environment variables needed.
 * `base: "./"` in `vite.config.ts` makes every asset URL relative, so the site works on any Pages subdomain or custom domain, including project previews.
-* `public/_headers` and `public/_redirects` are copied into `dist/` automatically and give you sane security headers and a PWA-friendly SPA fallback.
+* `public/_headers` is copied into `dist/` automatically and applies sane security headers.
+* `wrangler.jsonc` (assets-only Worker, SPA `not_found_handling`) is committed so `npx wrangler deploy` runs deterministically — no interactive setup step during the Cloudflare build.
 * Alternatively, without Git: **Create → Pages → Upload assets** and drop the contents of `dist/` (from `npm run build`).
 
 ## Run / build / test
