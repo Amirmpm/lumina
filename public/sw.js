@@ -1,6 +1,6 @@
 // Lumina service worker — network-first with cache fallback for same-origin GETs (app is a single index.html).
-const CACHE = 'lumina-v1';
-self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', './index.html', './manifest.webmanifest', './icon.svg']).catch(() => {})).then(() => self.skipWaiting())); });
+const CACHE = 'lumina-v2';
+self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', './index.html', './manifest.webmanifest', './icon.svg?v=2', './favicon.ico?v=2', './apple-touch-icon.png?v=2', './icon-192.png?v=2', './icon-512.png?v=2']).catch(() => {})).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
   const r = e.request; if (r.method !== 'GET' || new URL(r.url).origin !== location.origin) return;
