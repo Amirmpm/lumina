@@ -31,6 +31,16 @@ test('gold theme uses a bright accent and keeps text readable in both modes', ()
   assert.match(css, /\.rail-item\[aria-current="page"\]\s*\{[^}]*color:\s*var\(--accent-ink\)/);
 });
 
+test('form control inheritance stays in the base layer and cannot whiten gold buttons', () => {
+  // Unlayered author rules outrank every layered rule, including .btn-primary.
+  // Keep the reset in @layer base so the component's --accent-text wins in a real browser cascade.
+  const base = css.match(/@layer\s+base\s*\{([\s\S]*?)\}/)?.[1] ?? '';
+  assert.match(base, /button,\s*input,\s*select,\s*textarea\s*\{[^}]*color:\s*inherit/);
+  const withoutLayers = css.replace(/@layer\s+(?:base|components)\s*\{[\s\S]*?\n\}/g, '');
+  assert.doesNotMatch(withoutLayers, /button,\s*input,\s*select,\s*textarea\s*\{[^}]*color:\s*inherit/);
+  assert.ok(css.indexOf('@layer base') < css.indexOf('@layer components'), 'base reset must precede component button colors');
+});
+
 test('dark theme semantic colors, buttons and drawings maintain readable contrast', () => {
   for (const [fg, bg] of [
     ['text', 'bg'], ['text', 'surface'], ['text', 'surface-2'], ['muted', 'surface'],

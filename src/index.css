@@ -36,7 +36,10 @@
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.45 var(--font); -webkit-font-smoothing: antialiased; overflow: hidden; }
-button, input, select, textarea { font: inherit; color: inherit; }
+@layer base {
+  /* Keep the control reset below component styles so gold buttons retain their dark foreground. */
+  button, input, select, textarea { font: inherit; color: inherit; }
+}
 input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 ::selection { background: var(--accent-soft); }
