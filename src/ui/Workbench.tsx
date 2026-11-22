@@ -70,7 +70,7 @@ export function Workbench() {
   const jump = (dir: 1 | -1) => { const xs = [...new Set(pos.map((q) => +q.x.toFixed(4)))].sort((a, b) => a - b); const nx = dir > 0 ? xs.find((x) => x > selX + 1e-6) : [...xs].reverse().find((x) => x < selX - 1e-6); if (nx !== undefined) act.select({ x: nx, lum: pos.findIndex((q) => +q.x.toFixed(4) === nx) }); };
   void lumX;
   useEffect(() => { if (sel.x > geom.L) act.select({ x: geom.L / 2 }); }, [geom.L, sel.x]);
-  const panelTitle = (k: string, icon: string) => <div className="absolute top-2 start-2 z-10 chip" style={{ background: 'rgba(255,255,255,.88)', backdropFilter: 'blur(2px)' }}><Icon n={icon} s={11} />{t(k)}</div>;
+  const panelTitle = (k: string, icon: string) => <div className="absolute top-2 start-2 z-10 chip" style={{ background: 'var(--surface)', backdropFilter: 'blur(2px)' }}><Icon n={icon} s={11} />{t(k)}</div>;
   const cell = (k: string, icon: string, node: React.ReactNode, cls = '') => <div className={'relative min-h-0 min-w-0 border border-[var(--border)] rounded-lg overflow-hidden bg-white ' + cls}>{panelTitle(k, icon)}{node}</div>;
 
   return <div className="flex h-full min-h-0">

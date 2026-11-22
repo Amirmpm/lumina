@@ -118,7 +118,7 @@ export function Optimize() {
 }
 
 // ───────────────────────────────────────── Scenarios
-const PALETTE = ['#0b7a75', '#c26a00', '#3d5a99', '#8a3b6b'];
+const PALETTE = ['#8c630a', '#c26a00', '#3d5a99', '#8a3b6b'];
 export function Scenarios() {
   const t = useT(); const p = useS((s) => s.project)!; const review = useS((s) => s.review); useS((s) => s.evalV);
   const [chosen, setChosen] = useState<string[]>([]);

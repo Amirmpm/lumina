@@ -7,6 +7,7 @@ type P = Record<string, string | number>;
 export const D: Record<string, [string, string]> = {
   'app.title': ['Lumina — Tunnel Lighting Design & Optimization', 'لومینا — طراحی و بهینه‌سازی روشنایی تونل'], 'app.tag': ['Tunnel lighting engineering workbench', 'میزکار مهندسی روشنایی تونل'],
   'common.back': ['Back', 'قبلی'], 'common.next': ['Next', 'بعدی'], 'common.cancel': ['Cancel', 'انصراف'], 'common.confirm': ['Confirm', 'تأیید'], 'common.delete': ['Delete', 'حذف'], 'common.edit': ['Edit', 'ویرایش'], 'common.save': ['Save', 'ذخیره'],
+  'theme.dark': ['Dark', 'تیره'], 'theme.light': ['Light', 'روشن'], 'theme.switchDark': ['Switch to dark theme', 'تغییر به حالت تیره'], 'theme.switchLight': ['Switch to light theme', 'تغییر به حالت روشن'],
   'common.undo': ['Undo', 'واگرد'], 'common.redo': ['Redo', 'ازنو'], 'common.language': ['Language', 'زبان'], 'common.units': ['Units', 'یکاها'],
   'nav.projects': ['Projects', 'پروژه‌ها'], 'nav.main': ['Workflow', 'گردش کار'], 'nav.shortcuts': ['Ctrl+Enter calculate · Ctrl+S save · Ctrl+Z undo', 'Ctrl+Enter محاسبه · Ctrl+S ذخیره · Ctrl+Z واگرد'], 'nav.back': ['Back to “{name}”', 'بازگشت به «{name}»'],
   'stage.wizard': ['Setup', 'تنظیمات پروژه'], 'stage.design': ['Design', 'طراحی'], 'stage.library': ['Luminaires', 'چراغ‌ها'], 'stage.results': ['Results', 'نتایج'], 'stage.optimize': ['Optimize', 'بهینه‌سازی'], 'stage.scenarios': ['Scenarios', 'سناریوها'], 'stage.files': ['Files & export', 'فایل و خروجی'],

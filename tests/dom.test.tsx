@@ -45,9 +45,22 @@ test('DOM workflow: wizard → design → results → optimise → scenarios →
   const waitFor = async (pred: () => boolean, what: string, ms = 30000) => { process.stdout.write(`[step] waitFor ${what}\n`); const t0 = Date.now(); while (!pred()) { if (Date.now() - t0 > ms) assert.fail('timeout: ' + what); await wait(50); } };
   const errors: string[] = []; const origErr = console.error; console.error = (...a: unknown[]) => { errors.push(a.map(String).join(' ')); };
 
-  const root = createRoot(container); await reactAct(async () => { root.render(<App />); }); await wait(100);
+  // A saved preference is restored on startup and survives a remount.
+  win.localStorage.setItem('lumina.theme', 'dark');
+  let root = createRoot(container); await reactAct(async () => { root.render(<App />); }); await wait(100);
   assert.ok(text().includes('Projects'));
+  assert.equal(doc.documentElement.dataset.theme, 'dark');
+  await click('Switch to light theme');
+  assert.equal(doc.documentElement.dataset.theme, 'light');
+  assert.equal(win.localStorage.getItem('lumina.theme'), 'light');
+  await click('Switch to dark theme');
+  await reactAct(async () => { root.unmount(); });
+  root = createRoot(container); await reactAct(async () => { root.render(<App />); }); await wait(100);
+  assert.equal(doc.documentElement.dataset.theme, 'dark');
+  assert.equal(win.localStorage.getItem('lumina.theme'), 'dark');
   await click('New project'); assert.ok(text().includes('Project setup'));
+  await click('Switch to light theme'); assert.equal(doc.documentElement.dataset.theme, 'light');
+  await click('Switch to dark theme'); assert.equal(doc.documentElement.dataset.theme, 'dark');
   await click('Mining / underground', '[role=radio]'); assert.ok(find('Mining / underground', '[role=radio]')!.getAttribute('aria-checked') === 'true');
   await setVal(doc.getElementById('pn')!, 'DOM Test Mine');
   for (let i = 0; i < 4; i++) await click('Next');
@@ -55,7 +68,7 @@ test('DOM workflow: wizard → design → results → optimise → scenarios →
   assert.ok(text().includes('Cross-section') && text().includes('Up to date'), 'design view with fresh calculation');
   assert.equal(store.getState().project!.name, 'DOM Test Mine'); assert.equal(store.getState().project!.tunnelType, 'mining');
 
-  await click('فا'); assert.equal(doc.documentElement.dir, 'rtl'); assert.ok(text().includes('مقطع عرضی')); await click('EN'); assert.equal(doc.documentElement.dir, 'ltr');
+  await click('فا'); assert.equal(doc.documentElement.dir, 'rtl'); assert.ok(text().includes('مقطع عرضی')); assert.ok(find('تغییر به حالت روشن')); await click('EN'); assert.equal(doc.documentElement.dir, 'ltr');
   await click('ft'); assert.ok(text().includes('ft')); await click('=m');
 
   await click('Results'); assert.ok(text().includes('Calculation results') && text().includes('E avg (maintained)') && text().includes('Criteria'));

@@ -9,7 +9,7 @@ export function heat(t: number): string {
   const a = STOPS[i], b = STOPS[i + 1];
   return `rgb(${Math.round(a[0] + (b[0] - a[0]) * f)},${Math.round(a[1] + (b[1] - a[1]) * f)},${Math.round(a[2] + (b[2] - a[2]) * f)})`;
 }
-export const C = { ink: '#14202b', line: '#9aa5b1', faint: '#d9dde3', accent: '#0b7a75', lum: '#f2a900', text: '#161b22', muted: '#5b6574', bg3d: '#101820' };
+export const C = { ink: '#14202b', line: '#9aa5b1', faint: '#d9dde3', accent: '#8c630a', lum: '#f2a900', text: '#161b22', muted: '#5b6574', bg3d: '#101820' };
 export interface Tx { x0: number; scale: number; y0: number } // plan: world x → px = (x-x0)*scale ; world y → px = y0 + y*scale
 
 export function drawColorbar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, vmin: number, vmax: number, unit: string, dark = false) {
@@ -52,7 +52,7 @@ export function drawSection(ctx: CanvasRenderingContext2D, w: number, h: number,
   const X = (y: number) => ox + y * sc, Z = (z: number) => oz - z * sc;
   ctx.beginPath(); g.outline.forEach((p, i) => (i ? ctx.lineTo(X(p.y), Z(p.z)) : ctx.moveTo(X(p.y), Z(p.z)))); ctx.closePath();
   ctx.fillStyle = '#eef1f4'; ctx.fill(); ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.stroke();
-  ctx.fillStyle = 'rgba(11,122,117,.28)'; ctx.fillRect(X(g.zone.y0), Z(0) - 3, (g.zone.y1 - g.zone.y0) * sc, 6);
+  ctx.fillStyle = 'rgba(176,130,29,.28)'; ctx.fillRect(X(g.zone.y0), Z(0) - 3, (g.zone.y1 - g.zone.y0) * sc, 6);
   const at = pos.map((q, i) => ({ q, i })).filter(({ q }) => Math.abs(q.x - selX) <= Math.max(0.6, (lum?.length ?? 0.6) / 2 + 1e-6) || false);
   const rowsShown = new Set<number>();
   const nearest = new Map<number, { q: Placed; i: number }>();
@@ -124,13 +124,13 @@ export function draw3D(ctx: CanvasRenderingContext2D, w: number, h: number, cam:
   for (const x of xs) ring(x, 'rgba(160,185,205,.38)', 1);
   const stride = Math.max(1, Math.floor(n / 12));
   ctx.strokeStyle = 'rgba(160,185,205,.3)'; for (let k = 0; k < n; k += stride) { const a = g.outline[k]; const p = P(x0, a.y, a.z), q = P(x1, a.y, a.z); if (p && q) { ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); } }
-  ring(Math.min(g.L, Math.max(0, selX)), '#2ee6d6', 2.5);
+  ring(Math.min(g.L, Math.max(0, selX)), '#efc467', 2.5);
   if (o.lums) {
     const hl = (lum?.length ?? 0.6) / 2, hw = Math.max((lum?.width ?? 0.1) / 2, 0.05), z = (q: Placed) => q.z;
     const items = pos.map((q, i) => ({ q, i })).filter(({ q }) => q.x >= x0 - 1 && q.x <= x1 + 1);
     const big = items.length > 400;
     for (const { q, i } of items) {
-      const sel = i === selLum; ctx.fillStyle = sel ? '#ffffff' : '#ffc233'; ctx.strokeStyle = sel ? '#2ee6d6' : '#7a5500'; ctx.lineWidth = sel ? 2 : 1;
+      const sel = i === selLum; ctx.fillStyle = sel ? '#ffffff' : '#ffc233'; ctx.strokeStyle = sel ? '#efc467' : '#7a5500'; ctx.lineWidth = sel ? 2 : 1;
       if (big) { const p = P(q.x, q.y, z(q)); if (p) { ctx.fillRect(p[0] - 1.5, p[1] - 1.5, 3, 3); } continue; }
       const pts = [P(q.x - hl, q.y - hw, z(q)), P(q.x + hl, q.y - hw, z(q)), P(q.x + hl, q.y + hw, z(q)), P(q.x - hl, q.y + hw, z(q))];
       if (pts.every((p) => p)) { ctx.beginPath(); pts.forEach((p, k) => (k ? ctx.lineTo(p![0], p![1]) : ctx.moveTo(p![0], p![1]))); ctx.closePath(); ctx.fill(); ctx.stroke(); }

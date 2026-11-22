@@ -136,7 +136,7 @@ export function PolarPlot({ ph, size = 230 }: { ph: Photometry; size?: number })
     [...ph.G].reverse().forEach((g) => { const j = ph.G.indexOf(g); const r = (b[j] / peak) * R, th = (g * Math.PI) / 180; pts.push(`${c - r * Math.sin(th)},${c + r * Math.cos(th)}`); }); return pts.join(' '); };
   return <svg width={size} height={size} role="img" aria-label="polar" style={{ direction: 'ltr' }}>{[0.25, 0.5, 0.75, 1].map((f) => <circle key={f} cx={c} cy={c} r={R * f} fill="none" stroke="var(--border)" />)}
     <line x1={c} x2={c} y1={c - R} y2={c + R} stroke="var(--border)" /><line x1={c - R} x2={c + R} y1={c} y2={c} stroke="var(--border)" />
-    <polyline points={path(0, 180)} fill="rgba(11,122,117,.12)" stroke="var(--accent)" strokeWidth="1.8" /><polyline points={path(90, 270)} fill="none" stroke="var(--warn)" strokeWidth="1.6" strokeDasharray="5 3" />
+    <polyline points={path(0, 180)} fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1.8" /><polyline points={path(90, 270)} fill="none" stroke="var(--warn)" strokeWidth="1.6" strokeDasharray="5 3" />
     <text x={c} y={size - 4} textAnchor="middle" fontSize="10" fill="var(--faint)">0°</text><text x={c + R + 2} y={c - 3} textAnchor="end" fontSize="10" fill="var(--faint)">90°</text><text x={6} y={12} fontSize="10" fill="var(--faint)">{Math.round(peak)} cd</text></svg>;
 }
 export function verdictChip(v: string, t: (k: string) => string) {
