@@ -17,7 +17,8 @@ test('DOM workflow: wizard → design → results → optimise → scenarios →
   g.IS_REACT_ACT_ENVIRONMENT = true; g.requestAnimationFrame = (f: () => void) => setTimeout(f, 0); g.cancelAnimationFrame = clearTimeout;
   g.ResizeObserver = class { constructor(private cb: () => void) {} observe() { this.cb(); } disconnect() {} unobserve() {} };
   Object.defineProperty(win.HTMLElement.prototype, 'clientWidth', { get: () => 640, configurable: true }); Object.defineProperty(win.HTMLElement.prototype, 'clientHeight', { get: () => 400, configurable: true });
-  const ctx = new Proxy({} as Record<string, unknown>, { get: (t, k: string) => (k in t ? t[k] : k === 'measureText' ? (s: string) => ({ width: s.length * 8 }) : () => undefined), set: (t, k: string, v) => { t[k] = v; return true; } });
+  const colors: string[] = [];
+  const ctx = new Proxy({} as Record<string, unknown>, { get: (t, k: string) => (k in t ? t[k] : k === 'measureText' ? (s: string) => ({ width: s.length * 8 }) : () => undefined), set: (t, k: string, v) => { if (k === 'fillStyle' && typeof v === 'string') colors.push(v); t[k] = v; return true; } });
   win.HTMLCanvasElement.prototype.getContext = () => ctx; win.HTMLCanvasElement.prototype.toDataURL = () => 'data:image/jpeg;base64,/9j/2Q==';
   const blobs: Blob[] = []; const downloads: string[] = [];
   (URL as unknown as { createObjectURL: (b: Blob) => string }).createObjectURL = (b) => { blobs.push(b); return 'blob:x'; };
@@ -67,11 +68,18 @@ test('DOM workflow: wizard → design → results → optimise → scenarios →
   assert.ok(text().includes('Project-defined criteria')); await click('Finish & calculate');
   assert.ok(text().includes('Cross-section') && text().includes('Up to date'), 'design view with fresh calculation');
   assert.equal(store.getState().project!.name, 'DOM Test Mine'); assert.equal(store.getState().project!.tunnelType, 'mining');
+  assert.ok(colors.includes('#171b22'), 'dark canvases use the dark background');
+  colors.length = 0;
+  await click('Switch to light theme');
+  assert.ok(colors.includes('#fbfcfd'), 'canvas redraws with light colors when switching themes');
+  colors.length = 0;
+  await click('Switch to dark theme');
+  assert.ok(colors.includes('#171b22'), 'canvas redraws with dark colors when switching back');
 
   await click('فا'); assert.equal(doc.documentElement.dir, 'rtl'); assert.ok(text().includes('مقطع عرضی')); assert.ok(find('تغییر به حالت روشن')); await click('EN'); assert.equal(doc.documentElement.dir, 'ltr');
   await click('ft'); assert.ok(text().includes('ft')); await click('=m');
 
-  await click('Results'); assert.ok(text().includes('Calculation results') && text().includes('E avg (maintained)') && text().includes('Criteria'));
+  colors.length = 0; await click('Results'); assert.ok(text().includes('Calculation results') && text().includes('E avg (maintained)') && text().includes('Criteria')); assert.ok(colors.includes('#171b22'), 'results heat map uses dark background');
   await click('Optimize'); await click('Run optimisation'); await waitFor(() => text().includes('Ranked candidates'), 'optimisation finished');
   assert.ok(store.getState().opt!.feasibleCount > 0); await click('Save as scenario'); assert.equal(store.getState().project!.scenarios.length, 2);
   await click('Scenarios'); assert.ok(text().includes('Side-by-side') && all('table tbody tr').length >= 2);

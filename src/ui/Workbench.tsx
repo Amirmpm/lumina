@@ -57,21 +57,20 @@ export function Workbench() {
     onWheel: (x: number, _y: number, dy: number) => setPlan((b) => { const { w, h } = dims.current; const cur = b ?? planFit(w, h, geom); const f = Math.exp(-dy * 0.0015); const ns = Math.max(0.05, Math.min(400, cur.scale * f)); const wx = cur.x0 + x / cur.scale; return { ...cur, scale: ns, x0: wx - x / ns }; }),
     onDouble: () => setPlan(null),
   };
-  const wrapDraw = <A extends unknown[]>(fn: (ctx: CanvasRenderingContext2D, w: number, h: number, ...a: A) => void, ...a: A) => (ctx: CanvasRenderingContext2D, w: number, h: number) => { dims.current = { w, h }; fn(ctx, w, h, ...a); };
 
   const d3 = (<CanvasView label={t('view.3d')} cursor="grab" deps={[cam, geom, pos, grid, selX, sel.lum, heat, lums, full, mf]} handlers={h3}
-    draw={wrapDraw((ctx, w, h) => { draw3D(ctx, w, h, cam, geom, pos, lum, grid, vmax, mf, selX, sel.lum, { heat, lums, full }); if (grid && heat) drawColorbar(ctx, w - 170, 12, 150, 8, 0, vmax, 'lx', true); })} />);
+    draw={(ctx, w, h, dark) => { dims.current = { w, h }; draw3D(ctx, w, h, cam, geom, pos, lum, grid, vmax, mf, selX, sel.lum, { heat, lums, full, dark }); if (grid && heat) drawColorbar(ctx, w - 170, 12, 150, 8, 0, vmax, 'lx', true); }} />);
   const dPlan = (<CanvasView label={t('view.plan')} cursor="crosshair" deps={[plan, geom, pos, grid, selX, sel.lum, heat, lums, mf]} handlers={hPlan}
-    draw={(ctx, w, h) => { dims.current = { w, h }; const tx = planTx(w, h); drawPlan(ctx, w, h, tx, geom, pos, lum, grid, vmax, mf, selX, sel.lum, { heat, lums }); if (grid && heat) drawColorbar(ctx, w - 170, 10, 150, 8, 0, vmax, 'lx'); }} />);
+    draw={(ctx, w, h, dark) => { dims.current = { w, h }; const tx = planTx(w, h); drawPlan(ctx, w, h, tx, geom, pos, lum, grid, vmax, mf, selX, sel.lum, { heat, lums, dark }); if (grid && heat) drawColorbar(ctx, w - 170, 10, 150, 8, 0, vmax, 'lx', dark); }} />);
   const dSec = (<CanvasView label={t('view.section')} deps={[geom, pos, selX, sel.lum, profile, lang]}
-    draw={(ctx, w, h) => drawSection(ctx, w, h, geom, pos, lum, selX, sel.lum, profile, Math.max(...(profile?.map((q) => q.e) ?? [0]), 1e-9), { x: `x = ${selX.toFixed(1)} m`, w: t('view.width'), h: t('view.height'), e: t('view.eAcross') })} />);
+    draw={(ctx, w, h, dark) => drawSection(ctx, w, h, geom, pos, lum, selX, sel.lum, profile, Math.max(...(profile?.map((q) => q.e) ?? [0]), 1e-9), { x: `x = ${selX.toFixed(1)} m`, w: t('view.width'), h: t('view.height'), e: t('view.eAcross') }, { dark })} />);
 
   const lumX = pos.filter((q) => q.row === 0).map((q) => q.x);
   const jump = (dir: 1 | -1) => { const xs = [...new Set(pos.map((q) => +q.x.toFixed(4)))].sort((a, b) => a - b); const nx = dir > 0 ? xs.find((x) => x > selX + 1e-6) : [...xs].reverse().find((x) => x < selX - 1e-6); if (nx !== undefined) act.select({ x: nx, lum: pos.findIndex((q) => +q.x.toFixed(4) === nx) }); };
   void lumX;
   useEffect(() => { if (sel.x > geom.L) act.select({ x: geom.L / 2 }); }, [geom.L, sel.x]);
   const panelTitle = (k: string, icon: string) => <div className="absolute top-2 start-2 z-10 chip" style={{ background: 'var(--surface)', backdropFilter: 'blur(2px)' }}><Icon n={icon} s={11} />{t(k)}</div>;
-  const cell = (k: string, icon: string, node: React.ReactNode, cls = '') => <div className={'relative min-h-0 min-w-0 border border-[var(--border)] rounded-lg overflow-hidden bg-white ' + cls}>{panelTitle(k, icon)}{node}</div>;
+  const cell = (k: string, icon: string, node: React.ReactNode, cls = '') => <div className={'relative min-h-0 min-w-0 border border-[var(--border)] rounded-lg overflow-hidden bg-[var(--surface)] ' + cls}>{panelTitle(k, icon)}{node}</div>;
 
   return <div className="flex h-full min-h-0">
     <div className="flex-1 flex flex-col min-w-0 p-3 gap-2">

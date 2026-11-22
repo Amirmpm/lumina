@@ -60,9 +60,9 @@ test('UI smoke (server render): every stage renders in EN and FA for every tunne
 
 // Minimal recording 2D context so the drawing code and report layout execute for real (no pixels are checked).
 function fakeCtx() {
-  const calls: string[] = []; const target: Record<string, unknown> = { canvas: null };
-  const ctx = new Proxy(target, { get: (t, k: string) => (k in t ? t[k] : k === 'measureText' ? (s: string) => ({ width: String(s).length * 9 }) : (..._a: unknown[]) => { calls.push(k); }), set: (t, k: string, v) => { t[k] = v; return true; } });
-  return { ctx: ctx as unknown as CanvasRenderingContext2D, calls };
+  const calls: string[] = []; const fills: string[] = []; const target: Record<string, unknown> = { canvas: null };
+  const ctx = new Proxy(target, { get: (t, k: string) => (k in t ? t[k] : k === 'measureText' ? (s: string) => ({ width: String(s).length * 9 }) : (..._a: unknown[]) => { calls.push(k); }), set: (t, k: string, v) => { if (k === 'fillStyle' && typeof v === 'string') fills.push(v); t[k] = v; return true; } });
+  return { ctx: ctx as unknown as CanvasRenderingContext2D, calls, fills };
 }
 test('drawing code runs for all geometries and produces draw calls; report pipeline yields a PDF in both languages', async () => {
   for (const [type, shape] of [['road', 'arched'], ['mining', 'rect'], ['railway', 'circular']] as const) {
@@ -73,6 +73,13 @@ test('drawing code runs for all geometries and produces draw calls; report pipel
     drawPlan(f.ctx, 800, 300, planFit(800, 300, ev.geom), ev.geom, ev.positions, ev.lum, ev.grid, vmax, ev.mf, 60, null);
     drawSection(f.ctx, 500, 300, ev.geom, ev.positions, ev.lum, 60, 0, [{ y: 1, e: 5 }, { y: 2, e: 9 }], 9, { x: 'x', w: 'w', h: 'h', e: 'e' });
     assert.ok(f.calls.filter((c) => c === 'fill' || c === 'fillRect').length > 100, 'drew many primitives');
+    assert.ok(f.fills.includes('#fbfcfd'), 'default/report 2D canvases remain light');
+    const dark = fakeCtx();
+    draw3D(dark.ctx, 800, 500, CAM_PRESETS.iso(ev.geom, 60), ev.geom, ev.positions, ev.lum, ev.grid, vmax, ev.mf, 60, 0, { heat: true, lums: true, full: false, dark: true });
+    drawPlan(dark.ctx, 800, 300, planFit(800, 300, ev.geom), ev.geom, ev.positions, ev.lum, ev.grid, vmax, ev.mf, 60, null, { heat: true, lums: true, dark: true });
+    drawSection(dark.ctx, 500, 300, ev.geom, ev.positions, ev.lum, 60, 0, null, 1, { x: 'x', w: 'w', h: 'h', e: 'e' }, { dark: true });
+    assert.ok(dark.fills.includes('#171b22'), 'dark canvases use dark backgrounds');
+    assert.ok(!dark.fills.includes('#fbfcfd'), 'no light canvas background in dark drawings');
   }
   const p = createProject('mining', 'Report'); const ev = new Map(p.scenarios.map((s) => [s.id, evaluate(p, s.layout)]));
   const fake = fakeCtx();

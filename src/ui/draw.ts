@@ -10,6 +10,11 @@ export function heat(t: number): string {
   return `rgb(${Math.round(a[0] + (b[0] - a[0]) * f)},${Math.round(a[1] + (b[1] - a[1]) * f)},${Math.round(a[2] + (b[2] - a[2]) * f)})`;
 }
 export const C = { ink: '#14202b', line: '#9aa5b1', faint: '#d9dde3', accent: '#d4a735', lum: '#f2a900', text: '#161b22', muted: '#5b6574', bg3d: '#101820' };
+// The light palette remains the default for reports; interactive canvases opt into dark explicitly.
+export const DRAW_PALETTES = {
+  light: { bg: '#fbfcfd', floor: '#eef1f4', zone: '#dfe9ee', outline: C.ink, line: C.line, accent: C.accent, accentText: '#80600f', muted: C.muted, lum: C.lum },
+  dark: { bg: '#171b22', floor: '#2b323d', zone: '#384452', outline: '#b9c5d1', line: '#8996a6', accent: '#f2ca72', accentText: '#f7d78b', muted: '#cad3dd', lum: '#f2ca72' },
+} as const;
 export interface Tx { x0: number; scale: number; y0: number } // plan: world x → px = (x-x0)*scale ; world y → px = y0 + y*scale
 
 export function drawColorbar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, vmin: number, vmax: number, unit: string, dark = false) {
@@ -21,52 +26,54 @@ export function planFit(w: number, h: number, g: Geometry, pad = 28): Tx {
   const scale = Math.min((w - 2 * pad) / g.L, (h - 2 * pad - 20) / g.W);
   return { x0: -pad / scale, scale, y0: (h - g.W * scale) / 2 };
 }
-export function drawPlan(ctx: CanvasRenderingContext2D, w: number, h: number, tx: Tx, g: Geometry, pos: Placed[], lum: Luminaire | undefined, grid: GridResult | undefined, vmax: number, mf: number, selX: number, selLum: number | null, o: { heat: boolean; lums: boolean; label?: string; bg?: string } = { heat: true, lums: true }) {
-  ctx.fillStyle = o.bg ?? '#fbfcfd'; ctx.fillRect(0, 0, w, h);
+export function drawPlan(ctx: CanvasRenderingContext2D, w: number, h: number, tx: Tx, g: Geometry, pos: Placed[], lum: Luminaire | undefined, grid: GridResult | undefined, vmax: number, mf: number, selX: number, selLum: number | null, o: { heat: boolean; lums: boolean; label?: string; bg?: string; dark?: boolean } = { heat: true, lums: true }) {
+  const c = DRAW_PALETTES[o.dark ? 'dark' : 'light'];
+  ctx.fillStyle = o.bg ?? c.bg; ctx.fillRect(0, 0, w, h);
   const X = (x: number) => (x - tx.x0) * tx.scale, Y = (y: number) => tx.y0 + y * tx.scale;
-  ctx.fillStyle = '#eef1f4'; ctx.fillRect(X(0), Y(0), g.L * tx.scale, g.W * tx.scale);
+  ctx.fillStyle = c.floor; ctx.fillRect(X(0), Y(0), g.L * tx.scale, g.W * tx.scale);
   if (grid && o.heat) {
     const vm = vmax > 0 ? vmax : 1; const sx = Math.max(1, Math.ceil(1 / (grid.dx * tx.scale)));
     for (let i = 0; i < grid.nx; i += sx) { const px = X(i * grid.dx); if (px > w || X((i + sx) * grid.dx) < 0) continue; for (let j = 0; j < grid.ny; j++) { ctx.fillStyle = heat((grid.E[i * grid.ny + j] * mf) / vm); ctx.fillRect(px, Y(g.zone.y0 + j * grid.dy), grid.dx * sx * tx.scale + 0.8, grid.dy * tx.scale + 0.8); } }
-  } else { ctx.fillStyle = '#dfe9ee'; ctx.fillRect(X(0), Y(g.zone.y0), g.L * tx.scale, (g.zone.y1 - g.zone.y0) * tx.scale); }
-  ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.strokeRect(X(0), Y(0), g.L * tx.scale, g.W * tx.scale);
-  ctx.setLineDash([4, 3]); ctx.strokeStyle = C.accent; ctx.lineWidth = 1; for (const y of [g.zone.y0, g.zone.y1]) { ctx.beginPath(); ctx.moveTo(X(0), Y(y)); ctx.lineTo(X(g.L), Y(y)); ctx.stroke(); } ctx.setLineDash([]);
+  } else { ctx.fillStyle = c.zone; ctx.fillRect(X(0), Y(g.zone.y0), g.L * tx.scale, (g.zone.y1 - g.zone.y0) * tx.scale); }
+  ctx.strokeStyle = c.outline; ctx.lineWidth = 1.5; ctx.strokeRect(X(0), Y(0), g.L * tx.scale, g.W * tx.scale);
+  ctx.setLineDash([4, 3]); ctx.strokeStyle = c.accent; ctx.lineWidth = 1; for (const y of [g.zone.y0, g.zone.y1]) { ctx.beginPath(); ctx.moveTo(X(0), Y(y)); ctx.lineTo(X(g.L), Y(y)); ctx.stroke(); } ctx.setLineDash([]);
   if (o.lums) {
     const lw = Math.max(3, (lum?.length ?? 0.6) * tx.scale), lh = Math.max(3, Math.min(8, (lum?.width ?? 0.1) * tx.scale + 2));
-    pos.forEach((q, i) => { const px = X(q.x); if (px < -10 || px > w + 10) return; ctx.fillStyle = i === selLum ? '#fff' : C.lum; ctx.strokeStyle = i === selLum ? C.accent : C.ink; ctx.lineWidth = i === selLum ? 2 : 0.8; ctx.fillRect(px - lw / 2, Y(q.y) - lh / 2, lw, lh); ctx.strokeRect(px - lw / 2, Y(q.y) - lh / 2, lw, lh); });
+    pos.forEach((q, i) => { const px = X(q.x); if (px < -10 || px > w + 10) return; ctx.fillStyle = i === selLum ? '#fff' : c.lum; ctx.strokeStyle = i === selLum ? c.accent : c.outline; ctx.lineWidth = i === selLum ? 2 : 0.8; ctx.fillRect(px - lw / 2, Y(q.y) - lh / 2, lw, lh); ctx.strokeRect(px - lw / 2, Y(q.y) - lh / 2, lw, lh); });
   }
-  ctx.strokeStyle = C.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(selX), Y(0) - 8); ctx.lineTo(X(selX), Y(g.W) + 8); ctx.stroke();
-  ctx.fillStyle = C.accent; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(`x = ${selX.toFixed(1)} m`, X(selX), Y(0) - 10); ctx.textAlign = 'left';
+  ctx.strokeStyle = c.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(selX), Y(0) - 8); ctx.lineTo(X(selX), Y(g.W) + 8); ctx.stroke();
+  ctx.fillStyle = c.accentText; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(`x = ${selX.toFixed(1)} m`, X(selX), Y(0) - 10); ctx.textAlign = 'left';
   // scale bar
   const step = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000].find((s) => s * tx.scale > 60) ?? 1000;
-  ctx.fillStyle = C.muted; ctx.fillRect(12, h - 14, step * tx.scale, 2); ctx.font = '11px system-ui'; ctx.textBaseline = 'bottom'; ctx.fillText(step + ' m', 12, h - 17);
-  if (o.label) { ctx.fillStyle = C.muted; ctx.textAlign = 'right'; ctx.fillText(o.label, w - 10, h - 6); ctx.textAlign = 'left'; }
+  ctx.fillStyle = c.muted; ctx.fillRect(12, h - 14, step * tx.scale, 2); ctx.font = '11px system-ui'; ctx.textBaseline = 'bottom'; ctx.fillText(step + ' m', 12, h - 17);
+  if (o.label) { ctx.fillStyle = c.muted; ctx.textAlign = 'right'; ctx.fillText(o.label, w - 10, h - 6); ctx.textAlign = 'left'; }
 }
 
-export function drawSection(ctx: CanvasRenderingContext2D, w: number, h: number, g: Geometry, pos: Placed[], lum: Luminaire | undefined, selX: number, selLum: number | null, profile: { y: number; e: number }[] | null, emax: number, texts: { x: string; w: string; h: string; e: string }, o: { bg?: string } = {}) {
-  ctx.fillStyle = o.bg ?? '#fbfcfd'; ctx.fillRect(0, 0, w, h);
+export function drawSection(ctx: CanvasRenderingContext2D, w: number, h: number, g: Geometry, pos: Placed[], lum: Luminaire | undefined, selX: number, selLum: number | null, profile: { y: number; e: number }[] | null, emax: number, texts: { x: string; w: string; h: string; e: string }, o: { bg?: string; dark?: boolean } = {}) {
+  const c = DRAW_PALETTES[o.dark ? 'dark' : 'light'];
+  ctx.fillStyle = o.bg ?? c.bg; ctx.fillRect(0, 0, w, h);
   const ymin = Math.min(0, ...g.outline.map((p) => p.y)), ymax = Math.max(g.W, ...g.outline.map((p) => p.y));
   const padL = 36, padR = 36, padT = 26, bottom = profile ? 64 : 34;
   const sc = Math.min((w - padL - padR) / (ymax - ymin), (h - padT - bottom) / g.maxZ);
   const ox = (w - (ymax - ymin) * sc) / 2 - ymin * sc, oz = h - bottom;
   const X = (y: number) => ox + y * sc, Z = (z: number) => oz - z * sc;
   ctx.beginPath(); g.outline.forEach((p, i) => (i ? ctx.lineTo(X(p.y), Z(p.z)) : ctx.moveTo(X(p.y), Z(p.z)))); ctx.closePath();
-  ctx.fillStyle = '#eef1f4'; ctx.fill(); ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = c.floor; ctx.fill(); ctx.strokeStyle = c.outline; ctx.lineWidth = 2; ctx.stroke();
   ctx.fillStyle = 'rgba(226,185,78,.36)'; ctx.fillRect(X(g.zone.y0), Z(0) - 3, (g.zone.y1 - g.zone.y0) * sc, 6);
   const at = pos.map((q, i) => ({ q, i })).filter(({ q }) => Math.abs(q.x - selX) <= Math.max(0.6, (lum?.length ?? 0.6) / 2 + 1e-6) || false);
   const rowsShown = new Set<number>();
   const nearest = new Map<number, { q: Placed; i: number }>();
   for (const { q, i } of pos.map((q, i) => ({ q, i }))) { const c = nearest.get(q.row); if (!c || Math.abs(q.x - selX) < Math.abs(c.q.x - selX)) nearest.set(q.row, { q, i }); }
   void at; void rowsShown;
-  for (const { q, i } of nearest.values()) { const r = Math.max(4, ((lum?.height ?? 0.1) * sc) / 2 + 2); ctx.fillStyle = i === selLum ? '#fff' : C.lum; ctx.strokeStyle = i === selLum ? C.accent : C.ink; ctx.lineWidth = i === selLum ? 2.5 : 1; ctx.beginPath(); ctx.arc(X(q.y), Z(q.z), r, 0, 7); ctx.fill(); ctx.stroke(); ctx.strokeStyle = 'rgba(242,169,0,.45)'; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(X(q.y), Z(q.z) + r); ctx.lineTo(X(q.y), Z(0)); ctx.stroke(); ctx.setLineDash([]); }
-  ctx.fillStyle = C.muted; ctx.font = '11px system-ui'; ctx.textBaseline = 'top'; ctx.textAlign = 'center';
-  ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(0), Z(0) + 20); ctx.lineTo(X(g.W), Z(0) + 20); ctx.moveTo(X(0), Z(0) + 16); ctx.lineTo(X(0), Z(0) + 24); ctx.moveTo(X(g.W), Z(0) + 16); ctx.lineTo(X(g.W), Z(0) + 24); ctx.stroke();
+  for (const { q, i } of nearest.values()) { const r = Math.max(4, ((lum?.height ?? 0.1) * sc) / 2 + 2); ctx.fillStyle = i === selLum ? '#fff' : c.lum; ctx.strokeStyle = i === selLum ? c.accent : c.outline; ctx.lineWidth = i === selLum ? 2.5 : 1; ctx.beginPath(); ctx.arc(X(q.y), Z(q.z), r, 0, 7); ctx.fill(); ctx.stroke(); ctx.strokeStyle = 'rgba(242,169,0,.45)'; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(X(q.y), Z(q.z) + r); ctx.lineTo(X(q.y), Z(0)); ctx.stroke(); ctx.setLineDash([]); }
+  ctx.fillStyle = c.muted; ctx.font = '11px system-ui'; ctx.textBaseline = 'top'; ctx.textAlign = 'center';
+  ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(0), Z(0) + 20); ctx.lineTo(X(g.W), Z(0) + 20); ctx.moveTo(X(0), Z(0) + 16); ctx.lineTo(X(0), Z(0) + 24); ctx.moveTo(X(g.W), Z(0) + 16); ctx.lineTo(X(g.W), Z(0) + 24); ctx.stroke();
   ctx.fillText(`${texts.w} ${g.W.toFixed(2)} m`, X(g.W / 2), Z(0) + 24);
   ctx.textAlign = 'left'; ctx.fillText(`${texts.h} ${g.maxZ.toFixed(2)} m`, 8, 8); ctx.fillText(texts.x, 8, 22);
   if (profile && profile.length && emax > 0) {
-    const base = Z(0) + 56, hh = 22; ctx.strokeStyle = C.accent; ctx.lineWidth = 1.5; ctx.beginPath();
+    const base = Z(0) + 56, hh = 22; ctx.strokeStyle = c.accent; ctx.lineWidth = 1.5; ctx.beginPath();
     profile.forEach((p, i) => (i ? ctx.lineTo(X(p.y), base - (p.e / emax) * hh) : ctx.moveTo(X(p.y), base - (p.e / emax) * hh))); ctx.stroke();
-    ctx.fillStyle = C.accent; ctx.textAlign = 'right'; ctx.fillText(texts.e, w - 8, base - hh - 4); ctx.textAlign = 'left';
+    ctx.fillStyle = c.accentText; ctx.textAlign = 'right'; ctx.fillText(texts.e, w - 8, base - hh - 4); ctx.textAlign = 'left';
   }
 }
 export interface Cam { yaw: number; pitch: number; dist: number; tx: number; ty: number; tz: number }
@@ -97,8 +104,8 @@ export function floorPick(c: Cam, w: number, h: number, sx: number, sy: number):
   if (Math.abs(d[2]) < 1e-6) return null; const t = -b.eye[2] / d[2]; if (t < 0) return null;
   return [b.eye[0] + d[0] * t, b.eye[1] + d[1] * t];
 }
-export function draw3D(ctx: CanvasRenderingContext2D, w: number, h: number, cam: Cam, g: Geometry, pos: Placed[], lum: Luminaire | undefined, grid: GridResult | undefined, vmax: number, mf: number, selX: number, selLum: number | null, o: { heat: boolean; lums: boolean; full: boolean; bg?: string }) {
-  ctx.fillStyle = o.bg ?? C.bg3d; ctx.fillRect(0, 0, w, h);
+export function draw3D(ctx: CanvasRenderingContext2D, w: number, h: number, cam: Cam, g: Geometry, pos: Placed[], lum: Luminaire | undefined, grid: GridResult | undefined, vmax: number, mf: number, selX: number, selLum: number | null, o: { heat: boolean; lums: boolean; full: boolean; bg?: string; dark?: boolean }) {
+  ctx.fillStyle = o.bg ?? (o.dark ? '#171b22' : C.bg3d); ctx.fillRect(0, 0, w, h);
   const P = project3(cam, w, h);
   const half = o.full ? g.L : Math.min(g.L, 70) / 2 + 5;
   const x0 = o.full ? 0 : Math.max(0, selX - half), x1 = o.full ? g.L : Math.min(g.L, selX + half);

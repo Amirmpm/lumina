@@ -6,6 +6,7 @@ import type { Prov, Photometry } from '../domain/types';
 import { fmt, fromDisplay, toDisplay, unitLabel } from '../lib/units';
 import type { UnitSystem } from '../lib/units';
 import { act, useS } from './store';
+import { useTheme } from './theme';
 
 const P: Record<string, string> = {
   plus: 'M12 5v14M5 12h14', trash: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3', copy: 'M9 9h11v11H9zM5 15V4h11', download: 'M12 4v12m0 0l-4-4m4 4l4-4M5 20h14', upload: 'M12 16V4m0 0l-4 4m4-4l4 4M5 20h14',
@@ -97,9 +98,10 @@ export function useSize(ref: React.RefObject<HTMLElement | null>) {
   return sz;
 }
 export interface CvHandlers { onDown?: (x: number, y: number, e: RPE) => void; onMove?: (x: number, y: number, e: RPE) => void; onUp?: (x: number, y: number, e: RPE) => void; onWheel?: (x: number, y: number, dy: number) => void; onDouble?: () => void }
-export function CanvasView({ draw, deps, label, handlers, cursor }: { draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void; deps: unknown[]; label: string; handlers?: CvHandlers; cursor?: string }) {
+export function CanvasView({ draw, deps, label, handlers, cursor }: { draw: (ctx: CanvasRenderingContext2D, w: number, h: number, dark: boolean) => void; deps: unknown[]; label: string; handlers?: CvHandlers; cursor?: string }) {
+  const theme = useTheme();
   const wrap = useRef<HTMLDivElement>(null); const cv = useRef<HTMLCanvasElement>(null); const { w, h } = useSize(wrap);
-  useEffect(() => { const c = cv.current; if (!c || w < 4 || h < 4) return; const dpr = window.devicePixelRatio || 1; c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); const ctx = c.getContext('2d'); if (!ctx) return; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); draw(ctx, w, h); }, [w, h, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { const c = cv.current; if (!c || w < 4 || h < 4) return; const dpr = window.devicePixelRatio || 1; c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); const ctx = c.getContext('2d'); if (!ctx) return; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); draw(ctx, w, h, theme === 'dark'); }, [w, h, theme, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
   const pos = (e: { clientX: number; clientY: number }): [number, number] => { const r = cv.current!.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
   return <div ref={wrap} className="relative w-full h-full overflow-hidden"><canvas ref={cv} role="img" aria-label={label} tabIndex={0} style={{ width: w, height: h, touchAction: 'none', cursor: cursor ?? 'crosshair', display: 'block' }}
     onPointerDown={(e) => { cv.current!.setPointerCapture(e.pointerId); handlers?.onDown?.(...pos(e), e); }} onPointerMove={(e) => handlers?.onMove?.(...pos(e), e)} onPointerUp={(e) => handlers?.onUp?.(...pos(e), e)}

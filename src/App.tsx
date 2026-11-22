@@ -9,6 +9,8 @@ import { Library } from './ui/Library';
 import { Optimize, Results, Scenarios } from './ui/Analysis';
 import { Files } from './ui/Files';
 import { useModel } from './ui/model';
+import { ThemeContext } from './ui/theme';
+import type { Theme } from './ui/theme';
 import { TUNNEL_TYPES } from './domain/fields';
 
 const RAIL: { id: Stage; icon: string; k: string }[] = [
@@ -16,7 +18,6 @@ const RAIL: { id: Stage; icon: string; k: string }[] = [
   { id: 'results', icon: 'chart', k: 'stage.results' }, { id: 'optimize', icon: 'wand', k: 'stage.optimize' }, { id: 'scenarios', icon: 'compare', k: 'stage.scenarios' }, { id: 'files', icon: 'folder', k: 'stage.files' },
 ];
 
-type Theme = 'light' | 'dark';
 function ThemeToggle({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
   const t = useT();
   const label = t(theme === 'light' ? 'theme.switchDark' : 'theme.switchLight');
@@ -91,6 +92,7 @@ export default function App() {
   });
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#15191f' : '#ffffff');
     try { localStorage.setItem('lumina.theme', theme); } catch { /* storage may be unavailable */ }
   }, [theme]);
   const toggleTheme = () => setTheme((current) => current === 'light' ? 'dark' : 'light');
@@ -107,7 +109,7 @@ export default function App() {
     };
     window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
   }, []);
-  return <div className="h-full flex flex-col" dir={lang === 'fa' ? 'rtl' : 'ltr'}>
+  return <ThemeContext.Provider value={theme}><div className="h-full flex flex-col" dir={lang === 'fa' ? 'rtl' : 'ltr'}>
     {!ready ? <div className="h-full grid place-items-center text-[var(--muted)]"><Icon n="refresh" className="spin" s={24} /></div> : project && stage !== 'projects' ? <Shell theme={theme} onToggleTheme={toggleTheme} /> : <>
       <header className="h-11 shrink-0 flex items-center gap-2 px-3 text-[var(--ink-text)] border-b border-[var(--border)]" style={{ background: 'var(--ink)' }}><LogoMark /><span className="font-semibold tracking-wide">Lumina</span><span className="text-[var(--ink-muted)] text-[12px] ms-2">{t('app.tag')}</span><span className="flex-1" />
         {project && <Btn variant="ink" sm onClick={() => act.setStage('design')}>{t('nav.back', { name: project.name })}</Btn>}
@@ -115,5 +117,5 @@ export default function App() {
         <div className="seg" role="group" aria-label={t('common.language')}>{(['en', 'fa'] as const).map((l) => <button key={l} aria-pressed={lang === l} onClick={() => act.setLang(l)}>{l === 'en' ? 'EN' : 'فا'}</button>)}</div></header>
       <main className="flex-1 min-h-0"><Home /></main></>}
     <DialogHost /><ToastHost />
-  </div>;
+  </div></ThemeContext.Provider>;
 }
